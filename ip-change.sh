@@ -7,12 +7,14 @@ set -e
 force=false
 verbose=false
 
+path="/path/to/files"
+
 # Secret stuff, protect these files properly!
-myemail=$(cat .myemail)
-zone_id=$(cat .zone_id)
-record_id=$(cat .record_id)
-token=$(cat .dns_token)
-domain=$(cat .domain)
+myemail=$(cat "$path/.myemail")
+zone_id=$(cat "$path/.zone_id")
+record_id=$(cat "$path/.record_id")
+token=$(cat "$path/.dns_token")
+domain=$(cat "$path/.domain")
 
 usage()
 {
@@ -136,7 +138,7 @@ if $force && $verbose; then
             python3 -c "import sys, json; print(json.load(sys.stdin)['success'])") \
             == "True" ]]; then
       # Only update file if successful!
-      echo "$myip" > ./.myoldip
+      echo "$myip" > "$path/.myoldip"
       echo "Update successful, new ip $myip"
     else
        template="import sys, json;"
@@ -151,7 +153,7 @@ if $force && $verbose; then
 # Check old IP, no email is sent
 elif $verbose; then
     myip=$(get_public_ip)
-    myoldip=$(cat ./.myoldip)
+    myoldip=$(cat "$path/.myoldip")
     echo "New ip: $myip, old IP: $myoldip"
     if [[ "$myip" == "$myoldip" ]]; then
         echo "IP did not change"
@@ -164,7 +166,7 @@ elif $verbose; then
                 python3 -c "import sys, json; print(json.load(sys.stdin)['success'])") \
                 == "True" ]]; then
             # Only update file if successful!
-            echo "$myip" > ./.myoldip
+            echo "$myip" > "$path/.myoldip"
             echo "Update successful, new ip $myip"
         else
            template="import sys, json;"
@@ -189,7 +191,7 @@ elif $force; then
             python3 -c "import sys, json; print(json.load(sys.stdin)['success'])") \
             == "True" ]]; then
         # Only update file if successful!
-        echo "$myip" > ./.myoldip
+        echo "$myip" > "$path/.myoldip"
         echo "Current IP: $myip" | mail -s "Forced DNS update successful" "$myemail"
     else
         template="import sys, json;"
@@ -205,7 +207,7 @@ elif $force; then
 # Check old ip, email is sent if changed
 else
     myip=$(get_public_ip)
-    myoldip=$(cat ./.myoldip)
+    myoldip=$(cat "$path/.myoldip")
 
     if [[ "$myip" != "$myoldip" ]]; then
         update_status=$(update_dns_cf "$zone_id" "$record_id" "$token" "$domain" "$myip")
@@ -216,7 +218,7 @@ else
                 python3 -c "import sys, json; print(json.load(sys.stdin)['success'])") \
                 == "True" ]]; then
             # Only update file if successful!
-            echo "$myip" > ./.myoldip
+            echo "$myip" > "$path/.myoldip"
             echo "Current IP: $myip" | mail -s "IP changed, DNS update successful" "$myemail"
         else
             template="import sys, json;"
